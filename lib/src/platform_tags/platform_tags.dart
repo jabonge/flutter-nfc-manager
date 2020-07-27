@@ -331,7 +331,7 @@ class ISO15693 {
     });
   }
 
-  Future<Uint8List> writeSingleBlockCommand({
+  Future<bool> writeSingleBlockCommand({
     @required int blockNumber,
     @required Uint8List parameters,
   }) async {

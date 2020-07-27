@@ -321,6 +321,17 @@ class ISO15693 {
       'parameters': parameters,
     });
   }
+
+  Future<Uint8List> readSingleBlockCommand({
+    @required Set<ISO15693RequestFlag> requestFlags,
+    @required int blockNumber,
+  }) async {
+    return channel.invokeMethod('ISO15693#readSingleBlock', {
+      'handle': tag.handle,
+      'requestFlags': requestFlags.map((e) => e.index).toList(),
+      'blockNumber': blockNumber,
+    });
+  }
 }
 
 /// (iOS only) Provides access to ISO7816 operations on the tag.

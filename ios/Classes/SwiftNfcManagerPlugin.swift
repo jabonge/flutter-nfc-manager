@@ -55,6 +55,9 @@ public class SwiftNfcManagerPlugin: NSObject, FlutterPlugin {
         case "ISO15693#readSingleBlock":
             handleISO15693ReadSingleBlock(call.arguments as! [String:Any?], result: result)
             break
+        case "ISO15693#writeSingleBlock":
+            handleISO15693WriteSingleBlock(call.arguments as! [String:Any?], result: result)
+            break    
         case "ISO7816#sendCommand":
             handleISO7816SendCommand(call.arguments as! [String:Any?], result: result)
             break
@@ -275,6 +278,36 @@ public class SwiftNfcManagerPlugin: NSObject, FlutterPlugin {
 
             result(data)
         }
+    }
+
+    private func handleISO15693WriteSingleBlock(_ arguments: [String:Any?], result: @escaping FlutterResult) {
+        guard #available(iOS 13.0, *) else {
+            result(FlutterError(code: "unavailable", message: "Only available in iOS 13.0 or newer.", details: nil))
+            return
+        }
+
+        let handle = arguments["handle"] as! String
+        // let requestFlags = requestFlagFrom(arguments["requestFlags"] as! [Int])
+        let blockNumber = arguments["blockNumber"] as! Int
+        let parameters = (arguments["parameters"] as! FlutterStandardTypedData).data
+
+        guard let connectedTech = techs[handle] as? NFCISO15693Tag else {
+            result(FlutterError(code: "not_found", message: "Tag is not found.", details: nil))
+            return
+        }
+        connectedTech.writeSingleBlock(requestFlags:[.highDataRate],blockNumber: UInt8(blockNumber),dataBlock:parameters) { data, error in
+            
+            
+            
+            if let error = error {
+                result(error.toFlutterError())
+                return
+            }
+
+            result(data)
+        }
+
+        
     }
 
     private func handleISO15693ReadSingleBlock(_ arguments: [String:Any?], result: @escaping FlutterResult) {

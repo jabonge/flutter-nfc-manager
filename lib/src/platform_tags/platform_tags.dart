@@ -330,6 +330,17 @@ class ISO15693 {
       'blockNumber': blockNumber,
     });
   }
+
+  Future<Uint8List> writeSingleBlockCommand({
+    @required int blockNumber,
+    @required Uint8List parameters,
+  }) async {
+    return channel.invokeMethod('ISO15693#writeSingleBlock', {
+      'handle': tag.handle,
+      'blockNumber': blockNumber,
+      'parameters': parameters,
+    });
+  }
 }
 
 /// (iOS only) Provides access to ISO7816 operations on the tag.

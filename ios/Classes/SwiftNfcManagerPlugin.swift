@@ -284,7 +284,7 @@ public class SwiftNfcManagerPlugin: NSObject, FlutterPlugin {
         }
 
         let handle = arguments["handle"] as! String
-        let requestFlags = requestFlagFrom(arguments["requestFlags"] as! [Int])
+        // let requestFlags = requestFlagFrom(arguments["requestFlags"] as! [Int])
         let blockNumber = arguments["blockNumber"] as! Int
         // let parameters = (arguments["parameters"] as! FlutterStandardTypedData).data
 

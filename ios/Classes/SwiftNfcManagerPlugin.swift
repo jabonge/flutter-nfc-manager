@@ -293,7 +293,7 @@ public class SwiftNfcManagerPlugin: NSObject, FlutterPlugin {
             return
         }
         connectedTech.readSingleBlock(requestFlags:[.highDataRate],blockNumber: UInt8(blockNumber)) { data, error in
-            print(requestFlags)
+            
             print(blockNumber)
             print(UInt8(blockNumber))
             if let error = error {

@@ -295,7 +295,7 @@ public class SwiftNfcManagerPlugin: NSObject, FlutterPlugin {
             result(FlutterError(code: "not_found", message: "Tag is not found.", details: nil))
             return
         }
-        connectedTech.writeSingleBlock(requestFlags:[.highDataRate],blockNumber: UInt8(blockNumber),dataBlock:parameters) { data, error in
+        connectedTech.writeSingleBlock(requestFlags:[.highDataRate],blockNumber: UInt8(blockNumber),dataBlock:parameters) { error in
             
             
             

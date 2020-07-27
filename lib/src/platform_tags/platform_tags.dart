@@ -323,12 +323,10 @@ class ISO15693 {
   }
 
   Future<Uint8List> readSingleBlockCommand({
-    @required Set<ISO15693RequestFlag> requestFlags,
     @required int blockNumber,
   }) async {
     return channel.invokeMethod('ISO15693#readSingleBlock', {
       'handle': tag.handle,
-      'requestFlags': requestFlags.map((e) => e.index).toList(),
       'blockNumber': blockNumber,
     });
   }

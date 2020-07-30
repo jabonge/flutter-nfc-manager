@@ -34,7 +34,7 @@ class NfcManager {
   static NfcManager _instance;
   static NfcManager get instance => _instance ??= NfcManager._();
 
-  NdefDiscoveredCallback _onNdefDiscovered;
+
 
   TagDiscoveredCallback _onTagDiscovered;
 
@@ -45,25 +45,7 @@ class NfcManager {
     return channel.invokeMethod('isAvailable', {});
   }
 
-  /// Start session and register ndef discovered callback.
-  ///
-  /// This uses `NFCNDEFReaderSession` on iOS, `NfcAdapter#enableReaderMode` on Android.
-  /// Requires iOS 11.0 or Android API level 19, or later.
-  ///
-  /// [onDiscovered] is called each time an ndef is discovered.
-  ///
-  /// [onSessionError] is called when the session stops for any reason after the session started. (Currently iOS only)
-  Future<bool> startNdefSession({
-    @required NdefDiscoveredCallback onDiscovered,
-    String alertMessageIOS,
-    SessionErrorCallback onSessionError,
-  }) async {
-    _onNdefDiscovered = onDiscovered;
-    _onSessionError = onSessionError;
-    return channel.invokeMethod('startNdefSession', {
-      'alertMessageIOS': alertMessageIOS,
-    });
-  }
+
 
   /// Start session and register tag discovered callback.
   ///
@@ -99,7 +81,7 @@ class NfcManager {
     String errorMessageIOS,
     String alertMessageIOS,
   }) async {
-    _onNdefDiscovered = null;
+
     _onTagDiscovered = null;
     _onSessionError = null;
     return channel.invokeMethod('stopSession', {
@@ -110,9 +92,7 @@ class NfcManager {
 
   Future<void> _handleMethodCall(MethodCall call) async {
     switch (call.method) {
-      case 'onNdefDiscovered':
-        _handleNdefDiscovered(Map<String, dynamic>.from(call.arguments));
-        break;
+
       case 'onTagDiscovered':
         _handleOnTagDiscovered(Map<String, dynamic>.from(call.arguments));
         break;
@@ -122,13 +102,6 @@ class NfcManager {
     }
   }
 
-  Future<void> _handleNdefDiscovered(Map<String, dynamic> arguments) async {
-    NfcTag tag = $nfcTagFromJson(arguments);
-    Ndef ndef = $ndefFromTag(tag);
-    if (ndef != null && _onNdefDiscovered != null)
-      await _onNdefDiscovered(ndef);
-    _disposeTag(tag);
-  }
 
   Future<void> _handleOnTagDiscovered(Map<String, dynamic> arguments) async {
     NfcTag tag = $nfcTagFromJson(arguments);
@@ -140,7 +113,7 @@ class NfcManager {
   Future<void> _handleonSessionError(Map<String, dynamic> arguments) async {
     if (_onSessionError != null)
       _onSessionError($nfcSessionErrorFromJson(arguments));
-    _onNdefDiscovered = null;
+
     _onTagDiscovered = null;
     _onSessionError = null;
   }

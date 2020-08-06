@@ -45,6 +45,10 @@ class NfcManager {
     return channel.invokeMethod('isAvailable', {});
   }
 
+  Future<void> handleOnPause() async {
+    return channel.invokeMethod('onPause', {});
+  }
+
 
 
   /// Start session and register tag discovered callback.

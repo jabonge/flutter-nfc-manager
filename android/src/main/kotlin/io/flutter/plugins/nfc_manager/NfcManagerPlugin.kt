@@ -1,5 +1,6 @@
 package io.flutter.plugins.nfc_manager
 
+import android.app.Activity
 import android.nfc.NfcAdapter
 import android.nfc.Tag
 import android.nfc.tech.IsoDep
@@ -27,6 +28,7 @@ class NfcManagerPlugin(private val registrar: Registrar, private val channel: Me
     private val adapter = NfcAdapter.getDefaultAdapter(registrar.context())
     private val cachedTags = mutableMapOf<String, Tag>()
     private var connectedTech: TagTechnology? = null
+    private var activity: Activity? = null
 
     companion object {
         @JvmStatic
@@ -39,6 +41,7 @@ class NfcManagerPlugin(private val registrar: Registrar, private val channel: Me
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         when (call.method) {
             "isAvailable" -> handleIsAvailable(call, result)
+            "onPause" -> handleOnPause(result)
 
             "startTagSession" -> handleStartTagSession(call, result)
             "stopSession" -> handleStopSession(call, result)
@@ -53,6 +56,18 @@ class NfcManagerPlugin(private val registrar: Registrar, private val channel: Me
             else -> result.notImplemented()
         }
     }
+
+    private fun handleOnPause(@NonNull result: Result) {
+        activity?.let {
+            it.moveTaskToBack(true)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                it.finishAndRemoveTask()
+            }
+            android.os.Process.killProcess(android.os.Process.myPid())
+        }
+        result.success(null)
+    }
+
 
     private fun handleIsAvailable(@NonNull call: MethodCall, @NonNull result: Result) {
         result.success(adapter != null && adapter.isEnabled)
@@ -144,19 +159,19 @@ class NfcManagerPlugin(private val registrar: Registrar, private val channel: Me
     }
 
     override fun onDetachedFromActivity() {
-        android.os.Process.killProcess(android.os.Process.myPid())
+        activity = null
     }
 
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-
+        activity = binding.activity
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-
+        activity = binding.activity
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
-        android.os.Process.killProcess(android.os.Process.myPid())
+        activity = null
     }
 }

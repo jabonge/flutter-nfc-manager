@@ -79,6 +79,7 @@ class NfcManagerPlugin(private val channel: MethodChannel): MethodCallHandler,Ac
 
 
     private fun handleStartTagSession(@NonNull call: MethodCall, @NonNull result: Result) {
+        Log.d("check activity",activity.toString());
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
             result.error("unavailable", "Requires API level 19.", null)
         } else {

@@ -162,19 +162,23 @@ class NfcManagerPlugin(private val registrar: Registrar, private val channel: Me
     }
 
     override fun onDetachedFromActivity() {
+        Log.d("onDetachedFromActivity","onDetachedFromActivity")
         activity = null
     }
 
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+        Log.d("onReattach","onReattachedToActivityForConfigChanges")
         activity = binding.activity
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        Log.d("onAttachedToActivity","onAttachedToActivity")
         activity = binding.activity
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
+        Log.d("onDetachedForCC","onDetachedFromActivityForConfigChanges")
         activity = null
     }
 }

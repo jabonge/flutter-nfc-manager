@@ -11,6 +11,9 @@ import android.nfc.tech.NfcV
 import android.nfc.tech.TagTechnology
 import android.os.Build
 import androidx.annotation.NonNull
+import androidx.annotation.RequiresApi
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
@@ -20,7 +23,7 @@ import java.io.IOException
 import java.lang.reflect.InvocationTargetException
 import java.util.*
 
-class NfcManagerPlugin(private val registrar: Registrar, private val channel: MethodChannel): MethodCallHandler {
+class NfcManagerPlugin(private val registrar: Registrar, private val channel: MethodChannel): MethodCallHandler,ActivityAware {
     private val adapter = NfcAdapter.getDefaultAdapter(registrar.context())
     private val cachedTags = mutableMapOf<String, Tag>()
     private var connectedTech: TagTechnology? = null
@@ -138,5 +141,22 @@ class NfcManagerPlugin(private val registrar: Registrar, private val channel: Me
             tech.connect()
             connectedTech = tech
         }
+    }
+
+    override fun onDetachedFromActivity() {
+        android.os.Process.killProcess(android.os.Process.myPid())
+    }
+
+
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+
+    }
+
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+
+    }
+
+    override fun onDetachedFromActivityForConfigChanges() {
+        android.os.Process.killProcess(android.os.Process.myPid())
     }
 }

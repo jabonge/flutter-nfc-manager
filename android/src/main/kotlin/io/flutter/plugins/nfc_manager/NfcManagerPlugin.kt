@@ -19,20 +19,21 @@ import java.io.IOException
 import java.lang.reflect.InvocationTargetException
 import java.util.*
 
-class NfcManagerPlugin(private val channel: MethodChannel): MethodCallHandler,ActivityAware,FlutterPlugin {
+class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
 
     private val cachedTags = mutableMapOf<String, Tag>()
     private var adapter:NfcAdapter? = null
     private var connectedTech: TagTechnology? = null
     private var activity: Activity? = null
+    private var channel: MethodChannel? = null
 
-    companion object {
-        @JvmStatic
-        fun registerWith(registrar: Registrar) {
-            val channel = MethodChannel(registrar.messenger(), "plugins.flutter.io/nfc_manager")
-            channel.setMethodCallHandler(NfcManagerPlugin(channel))
-        }
-    }
+//    companion object {
+//        @JvmStatic
+//        fun registerWith(registrar: Registrar) {
+//            val channel = MethodChannel(registrar.messenger(), "plugins.flutter.io/nfc_manager")
+//            channel.setMethodCallHandler(NfcManagerPlugin(channel))
+//        }
+//    }
 
 
 
@@ -79,7 +80,7 @@ class NfcManagerPlugin(private val channel: MethodChannel): MethodCallHandler,Ac
 
 
     private fun handleStartTagSession(@NonNull call: MethodCall, @NonNull result: Result) {
-        Log.d("check activity",activity.toString());
+        Log.d("check activity",activity.toString())
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
             result.error("unavailable", "Requires API level 19.", null)
         } else {
@@ -87,7 +88,7 @@ class NfcManagerPlugin(private val channel: MethodChannel): MethodCallHandler,Ac
                 it.enableReaderMode(activity!!,{ tag ->
                     val handle = UUID.randomUUID().toString()
                     cachedTags[handle] = tag
-                    activity!!.runOnUiThread { channel.invokeMethod("onTagDiscovered", serialize(tag).toMutableMap().apply { put("handle", handle) }) }
+                    activity!!.runOnUiThread { channel?.invokeMethod("onTagDiscovered", serialize(tag).toMutableMap().apply { put("handle", handle) }) }
                 }, flagsFrom(call.argument<List<Int>>("pollingOptions")!!), null)
 
             }
@@ -196,8 +197,8 @@ class NfcManagerPlugin(private val channel: MethodChannel): MethodCallHandler,Ac
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         Log.d("onAttachedToEngine","onAttachedToEngine")
-        val channel = MethodChannel(binding.binaryMessenger, "plugins.flutter.io/nfc_manager")
-        channel.setMethodCallHandler(NfcManagerPlugin(channel))
+        channel = MethodChannel(binding.binaryMessenger, "plugins.flutter.io/nfc_manager")
+        channel?.setMethodCallHandler(this)
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {

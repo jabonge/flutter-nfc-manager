@@ -11,14 +11,14 @@ import android.nfc.tech.NfcF
 import android.nfc.tech.NfcV
 import android.nfc.tech.TagTechnology
 import android.os.Build
+import android.util.Log
 import androidx.annotation.NonNull
 import androidx.annotation.RequiresApi
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.MethodChannel.*
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.io.IOException
 import java.lang.reflect.InvocationTargetException
@@ -41,7 +41,7 @@ class NfcManagerPlugin(private val registrar: Registrar, private val channel: Me
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         when (call.method) {
             "isAvailable" -> handleIsAvailable(call, result)
-            "onPause" -> handleOnPause(result)
+            "onPause" -> handleOnPause(call,result)
 
             "startTagSession" -> handleStartTagSession(call, result)
             "stopSession" -> handleStopSession(call, result)
@@ -57,8 +57,11 @@ class NfcManagerPlugin(private val registrar: Registrar, private val channel: Me
         }
     }
 
-    private fun handleOnPause(@NonNull result: Result) {
+    private fun handleOnPause(@NonNull call: MethodCall,@NonNull result: Result) {
+        Log.d("handleOnPause","handleOnPause Called")
+
         activity?.let {
+            Log.d("moveTaskToBackStart","Activity is not null")
             it.moveTaskToBack(true)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 it.finishAndRemoveTask()

@@ -3,17 +3,12 @@ package io.flutter.plugins.nfc_manager
 import android.app.Activity
 import android.nfc.NfcAdapter
 import android.nfc.Tag
-import android.nfc.tech.IsoDep
-import android.nfc.tech.Ndef
-import android.nfc.tech.NfcA
-import android.nfc.tech.NfcB
-import android.nfc.tech.NfcF
 import android.nfc.tech.NfcV
 import android.nfc.tech.TagTechnology
 import android.os.Build
 import android.util.Log
 import androidx.annotation.NonNull
-import androidx.annotation.RequiresApi
+import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
@@ -24,9 +19,10 @@ import java.io.IOException
 import java.lang.reflect.InvocationTargetException
 import java.util.*
 
-class NfcManagerPlugin(private val registrar: Registrar, private val channel: MethodChannel): MethodCallHandler,ActivityAware {
-    private val adapter = NfcAdapter.getDefaultAdapter(registrar.context())
+class NfcManagerPlugin(private val channel: MethodChannel): MethodCallHandler,ActivityAware,FlutterPlugin {
+
     private val cachedTags = mutableMapOf<String, Tag>()
+    private var adapter:NfcAdapter? = null
     private var connectedTech: TagTechnology? = null
     private var activity: Activity? = null
 
@@ -34,23 +30,19 @@ class NfcManagerPlugin(private val registrar: Registrar, private val channel: Me
         @JvmStatic
         fun registerWith(registrar: Registrar) {
             val channel = MethodChannel(registrar.messenger(), "plugins.flutter.io/nfc_manager")
-            channel.setMethodCallHandler(NfcManagerPlugin(registrar, channel))
+            channel.setMethodCallHandler(NfcManagerPlugin(channel))
         }
     }
+
+
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         when (call.method) {
             "isAvailable" -> handleIsAvailable(call, result)
             "onPause" -> handleOnPause(call,result)
-
             "startTagSession" -> handleStartTagSession(call, result)
             "stopSession" -> handleStopSession(call, result)
             "disposeTag" -> handleDisposeTag(call, result)
-
-
-
-
-
             "NfcV#transceive" -> handleTransceive(NfcV::class.java, call, result)
 
             else -> result.notImplemented()
@@ -73,7 +65,16 @@ class NfcManagerPlugin(private val registrar: Registrar, private val channel: Me
 
 
     private fun handleIsAvailable(@NonNull call: MethodCall, @NonNull result: Result) {
-        result.success(adapter != null && adapter.isEnabled)
+        adapter?.let {
+            if (it.isEnabled) {
+                result.success(true)
+            } else {
+                result.success(false)
+            }
+
+        } ?: run {
+            result.success(false)
+        }
     }
 
 
@@ -81,11 +82,14 @@ class NfcManagerPlugin(private val registrar: Registrar, private val channel: Me
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
             result.error("unavailable", "Requires API level 19.", null)
         } else {
-            adapter.enableReaderMode(registrar.activity(), {
-                val handle = UUID.randomUUID().toString()
-                cachedTags[handle] = it
-                registrar.activity().runOnUiThread { channel.invokeMethod("onTagDiscovered", serialize(it).toMutableMap().apply { put("handle", handle) }) }
-            }, flagsFrom(call.argument<List<Int>>("pollingOptions")!!), null)
+            adapter?.let {
+                it.enableReaderMode(activity!!,{ tag ->
+                    val handle = UUID.randomUUID().toString()
+                    cachedTags[handle] = tag
+                    activity!!.runOnUiThread { channel.invokeMethod("onTagDiscovered", serialize(tag).toMutableMap().apply { put("handle", handle) }) }
+                }, flagsFrom(call.argument<List<Int>>("pollingOptions")!!), null)
+
+            }
             result.success(true)
         }
     }
@@ -94,7 +98,8 @@ class NfcManagerPlugin(private val registrar: Registrar, private val channel: Me
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
             result.error("unavailable", "Requires API level 19.", null)
         } else {
-            adapter.disableReaderMode(registrar.activity())
+            adapter?.disableReaderMode(activity!!)
+
             result.success(true)
         }
     }
@@ -161,24 +166,40 @@ class NfcManagerPlugin(private val registrar: Registrar, private val channel: Me
         }
     }
 
+
+
     override fun onDetachedFromActivity() {
         Log.d("onDetachedFromActivity","onDetachedFromActivity")
         activity = null
+        adapter = null
     }
 
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
         Log.d("onReattach","onReattachedToActivityForConfigChanges")
         activity = binding.activity
+        adapter = NfcAdapter.getDefaultAdapter(activity)
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         Log.d("onAttachedToActivity","onAttachedToActivity")
         activity = binding.activity
+        adapter = NfcAdapter.getDefaultAdapter(activity)
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
         Log.d("onDetachedForCC","onDetachedFromActivityForConfigChanges")
         activity = null
+        adapter = null
+    }
+
+    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        Log.d("onAttachedToEngine","onAttachedToEngine")
+        val channel = MethodChannel(binding.binaryMessenger, "plugins.flutter.io/nfc_manager")
+        channel.setMethodCallHandler(NfcManagerPlugin(channel))
+    }
+
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        TODO("Not yet implemented")
     }
 }

@@ -174,8 +174,8 @@ class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
 
     override fun onDetachedFromActivity() {
         Log.d("onDetachedFromActivity","onDetachedFromActivity")
-        activity = null
-        adapter = null
+
+
     }
 
 
@@ -193,8 +193,8 @@ class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
 
     override fun onDetachedFromActivityForConfigChanges() {
         Log.d("onDetachedForCC","onDetachedFromActivityForConfigChanges")
-        activity = null
-        adapter = null
+
+
     }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {

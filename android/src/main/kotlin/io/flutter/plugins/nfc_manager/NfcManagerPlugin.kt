@@ -54,7 +54,9 @@ class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
         Log.d("handleOnPause","handleOnPause Called")
 
         activity?.let {
-            Log.d("moveTaskToBackStart","Activity is not null")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                adapter?.disableReaderMode(it)
+            }
             it.moveTaskToBack(true)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 it.finishAndRemoveTask()
@@ -202,6 +204,6 @@ class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        TODO("Not yet implemented")
+
     }
 }

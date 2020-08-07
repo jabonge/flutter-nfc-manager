@@ -51,7 +51,7 @@ class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
     }
 
     private fun handleOnPause(@NonNull call: MethodCall,@NonNull result: Result) {
-        Log.d("handleOnPause","handleOnPause Called")
+
 
         activity?.let {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
@@ -82,7 +82,7 @@ class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
 
 
     private fun handleStartTagSession(@NonNull call: MethodCall, @NonNull result: Result) {
-        Log.d("check activity",activity.toString())
+
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
             result.error("unavailable", "Requires API level 19.", null)
         } else {
@@ -173,32 +173,32 @@ class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
 
 
     override fun onDetachedFromActivity() {
-        Log.d("onDetachedFromActivity","onDetachedFromActivity")
+
 
 
     }
 
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-        Log.d("onReattach","onReattachedToActivityForConfigChanges")
+
         activity = binding.activity
         adapter = NfcAdapter.getDefaultAdapter(activity)
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-        Log.d("onAttachedToActivity","onAttachedToActivity")
+
         activity = binding.activity
         adapter = NfcAdapter.getDefaultAdapter(activity)
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
-        Log.d("onDetachedForCC","onDetachedFromActivityForConfigChanges")
+
 
 
     }
 
     override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
-        Log.d("onAttachedToEngine","onAttachedToEngine")
+
         channel = MethodChannel(binding.binaryMessenger, "plugins.flutter.io/nfc_manager")
         channel?.setMethodCallHandler(this)
     }

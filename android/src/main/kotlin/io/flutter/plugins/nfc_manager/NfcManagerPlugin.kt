@@ -1,11 +1,17 @@
 package io.flutter.plugins.nfc_manager
 
 import android.app.Activity
+import android.app.PendingIntent
+import android.content.Intent
 import android.nfc.NfcAdapter
+import android.nfc.NfcAdapter.ACTION_TAG_DISCOVERED
+import android.nfc.NfcAdapter.EXTRA_TAG
 import android.nfc.Tag
 import android.nfc.tech.NfcV
 import android.nfc.tech.TagTechnology
 import android.os.Build
+import android.os.Parcel
+import android.os.Parcelable
 import android.util.Log
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -14,18 +20,20 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.*
+import io.flutter.plugin.common.PluginRegistry
 import io.flutter.plugin.common.PluginRegistry.Registrar
 import java.io.IOException
 import java.lang.reflect.InvocationTargetException
 import java.util.*
 
-class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
+class NfcManagerPlugin() : MethodCallHandler,ActivityAware,FlutterPlugin, PluginRegistry.NewIntentListener {
 
     private val cachedTags = mutableMapOf<String, Tag>()
     private var adapter:NfcAdapter? = null
     private var connectedTech: TagTechnology? = null
     private var activity: Activity? = null
     private var channel: MethodChannel? = null
+
 
 //    companion object {
 //        @JvmStatic
@@ -54,9 +62,8 @@ class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
 
 
         activity?.let {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                adapter?.disableReaderMode(it)
-            }
+
+            adapter?.disableForegroundDispatch(it)
             it.moveTaskToBack(true)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 it.finishAndRemoveTask()
@@ -83,26 +90,23 @@ class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
 
     private fun handleStartTagSession(@NonNull call: MethodCall, @NonNull result: Result) {
 
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
-            result.error("unavailable", "Requires API level 19.", null)
-        } else {
-            adapter?.let {
-                it.enableReaderMode(activity!!,{ tag ->
-                    val handle = UUID.randomUUID().toString()
-                    cachedTags[handle] = tag
-                    activity!!.runOnUiThread { channel?.invokeMethod("onTagDiscovered", serialize(tag).toMutableMap().apply { put("handle", handle) }) }
-                }, flagsFrom(call.argument<List<Int>>("pollingOptions")!!), null)
+        adapter?.let {
+            val intent = Intent(activity!!.applicationContext, activity!!::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+            val pendingIntent: PendingIntent = PendingIntent.getActivity(activity!!.applicationContext, 0, intent, 0)
 
-            }
-            result.success(true)
+            it.enableForegroundDispatch(activity, pendingIntent, null, null)
+
         }
+        result.success(true)
+
     }
 
     private fun handleStopSession(@NonNull call: MethodCall, @NonNull result: Result) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
             result.error("unavailable", "Requires API level 19.", null)
         } else {
-            adapter?.disableReaderMode(activity!!)
+            adapter?.disableForegroundDispatch(activity!!)
 
             result.success(true)
         }
@@ -170,6 +174,11 @@ class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
         }
     }
 
+    private fun startReadingWithForegroundDispatch(@NonNull call: MethodCall, @NonNull result: Result) {
+
+
+    }
+
 
 
     override fun onDetachedFromActivity() {
@@ -183,12 +192,14 @@ class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
 
         activity = binding.activity
         adapter = NfcAdapter.getDefaultAdapter(activity)
+        binding.addOnNewIntentListener(this)
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
 
         activity = binding.activity
         adapter = NfcAdapter.getDefaultAdapter(activity)
+        binding.addOnNewIntentListener(this)
     }
 
     override fun onDetachedFromActivityForConfigChanges() {
@@ -206,4 +217,26 @@ class NfcManagerPlugin: MethodCallHandler,ActivityAware,FlutterPlugin {
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
 
     }
+
+
+
+
+    override fun onNewIntent(intent: Intent?): Boolean {
+
+        val action = intent?.action
+        if (ACTION_TAG_DISCOVERED == action) {
+            val tag: Tag? = intent.getParcelableExtra(EXTRA_TAG)
+            tag?.let {
+                it ->
+                val handle = UUID.randomUUID().toString()
+                cachedTags[handle] = it
+                activity?.runOnUiThread { channel?.invokeMethod("onTagDiscovered", serialize(it).toMutableMap().apply { put("handle", handle) }) }
+                }
+                return true
+            }
+        return false
+        }
+
+
+
 }

@@ -63,7 +63,7 @@ class NfcManagerPlugin() : MethodCallHandler,ActivityAware,FlutterPlugin, Plugin
 
         activity?.let {
 
-            adapter?.disableForegroundDispatch(it)
+
             it.moveTaskToBack(true)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 it.finishAndRemoveTask()
